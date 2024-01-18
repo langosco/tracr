@@ -932,23 +932,13 @@ def _get_selected(
 
 
 def _mean(xs: Sequence[VT], default: VT) -> VT:
-  """Takes the mean for numbers and concats for strings."""
+  """Takes the mean for numbers."""
   if not xs:
     return default
-  exemplar = xs[0]
-  if isinstance(exemplar, (int, bool)):
-    out = sum(xs) / len(xs)
-    if out % 1 == 0:
-      out = int(out)  # TODO really if exemplar is bool we want to try to make out a bool too if possible
-      # proposal:
-      # 1. if input sop is categorical, we raise an error if the output cannot be safely casted to the same
-      # type as the input sop (ie int or bool), since we know that output_domain \subset input_domain.
-      # 2. if input sop is numerical, we check that it is all 1s and 0s (or all bools).
-      # Then if the output can safely be casted to the same type we do that, but don't raise an error if not.
-      # Also: we need to check for Nones
-    return out
   elif len(xs) == 1:
-    return exemplar
+    return xs[0]
+  if all(isinstance(x, (int, float, bool)) for x in xs):
+    return sum(xs) / len(xs)
   else:
     raise ValueError(f"Unsupported type for aggregation: {xs}")
 
