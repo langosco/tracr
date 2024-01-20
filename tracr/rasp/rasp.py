@@ -940,7 +940,8 @@ def _mean(xs: Sequence[VT], default: VT) -> VT:
   if all(isinstance(x, (int, float, bool)) for x in xs):
     return sum(xs) / len(xs)
   else:
-    raise ValueError(f"Unsupported type for aggregation: {xs}")
+    raise ValueError(f"Unsupported type for aggregation: {xs} "
+                     f"with types {[type(x) for x in xs]}.")
 
 
 def _raise_not_implemented(expr: RASPExpr, xs: Sequence[Value]):

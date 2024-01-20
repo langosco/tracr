@@ -27,6 +27,12 @@ from tracr.utils import errors
 Node = nodes.Node
 
 
+class InvalidValueSetError(ValueError):
+  """Raised when a value set is invalid."""
+  pass
+
+
+
 @dataclasses.dataclass
 class InferBasesOutput:
   graph: nx.DiGraph
@@ -57,6 +63,9 @@ def infer_bases(
         res = errors.ignoring_arithmetic_errors(sop.f)(x)
         if res is not None:
           out.add(res)
+      if rasp.is_numerical(sop) and any(x < 0 for x in out):
+        raise InvalidValueSetError(
+            f"Numerical map {sop.label} produced negative values: {set([x for x in out if x < 0])}")
       return out
     elif isinstance(sop, rasp.SequenceMap):
       f_ignore_error = errors.ignoring_arithmetic_errors(sop.f)
@@ -71,7 +80,12 @@ def infer_bases(
     elif isinstance(sop, rasp.Aggregate):
       if rasp.is_categorical(sop):
         # Simply pass on the value set of the underlying S-Op.
-        return graph.nodes[sop.sop.label][nodes.VALUE_SET]
+        input_value_set = graph.nodes[sop.sop.label][nodes.VALUE_SET]
+        if None in input_value_set:
+          raise InvalidValueSetError(
+              f"Categoirical Aggregate {sop.label} received a None "
+              f"value in its input value set: {input_value_set}")
+        return input_value_set
       elif rasp.is_numerical(sop):
         # TODO(b/255936408): This doesn't work if we average arbitrary values.
         # But most examples only average binary variables.
@@ -90,6 +104,18 @@ def infer_bases(
 
   for node_id in nx.dfs_postorder_nodes(graph.reverse(), sink[nodes.ID]):
     expr = graph.nodes[node_id][nodes.EXPR]
+
+#    # This check doesn't work, because None is not traced as part of the value
+#    # set of an Aggregate.
+#    if isinstance(expr, rasp.Selector):
+#      input_value_set = \
+#        graph.nodes[expr.keys.label][nodes.VALUE_SET] | \
+#        graph.nodes[expr.queries.label][nodes.VALUE_SET]
+#      if None in input_value_set:
+#        raise InvalidValueSetError(
+#            f"Selector {expr.label} received a None "
+#            f"value in its input value set: {input_value_set}")
+
 
     if not isinstance(expr, rasp.SOp):
       # Only S-Ops have output vector spaces.
