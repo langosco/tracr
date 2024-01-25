@@ -23,6 +23,9 @@ from tracr.rasp import rasp
 from tracr.transformer import encoder
 
 
+class NoTokensError(ValueError):
+  pass
+
 def craft_model_to_transformer(
     craft_model: transformers.SeriesWithResiduals,
     graph: nx.DiGraph,
@@ -34,7 +37,7 @@ def craft_model_to_transformer(
 ) -> assemble.AssembledTransformerModel:
   """Turn a craft model into a transformer model."""
   if rasp.tokens.label not in graph.nodes:
-    raise ValueError(f'Failed to find a node with label {rasp.tokens.label}. '
+    raise NoTokensError(f'Failed to find a node with label {rasp.tokens.label}. '
                      'This is probably because your RASP program does not include '
                      'rasp.tokens. A program must include rasp.tokens to be '
                      'compiled.')
