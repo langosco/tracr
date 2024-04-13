@@ -118,7 +118,7 @@ def _all_mlp_nodes(node_list: Sequence[Node]) -> bool:
 
 def _allocate_modules_to_layers(
     graph: nx.DiGraph, sources: Sequence[Node]
-) -> Dict[int, int]:
+) -> Dict[str, int]:
   """Allocate all nodes in compute graph to layers.
 
   First, computes the longest path from the input to each node that is a model
@@ -141,8 +141,8 @@ def _allocate_modules_to_layers(
     A dict mapping from node ids to layer indices, where 0, 1, 2, 3, ...
     are in the order attention, mlp, attention, mlp, ...
   """
-  layer_allocation: Dict[int, int] = collections.defaultdict(lambda: -1)
-  depth_by_node_id: Dict[int, int] = dict()
+  layer_allocation: Dict[str, int] = collections.defaultdict(lambda: -1)
+  depth_by_node_id: Dict[str, int] = dict()
   nodes_by_depth: Dict[int, List[Node]] = collections.defaultdict(list)
   computational_depth = compute_computational_depth(
       graph, [src[nodes.ID] for src in sources]
